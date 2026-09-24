@@ -90,11 +90,20 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.userName}>{userName}!</Text>
         </View>
-        <TouchableOpacity style={styles.avatarCircle} onPress={handleLogout}>
+
+        {/* Settings Icon / Button */}
+        <TouchableOpacity
+          style={styles.avatarCircle}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Text style={styles.avatarText}>⚙️</Text>
+        </TouchableOpacity>
+
+        {/* <TouchableOpacity style={styles.avatarCircle} onPress={handleLogout}>
           <Text style={styles.avatarText}>
             {userName.charAt(0).toUpperCase()}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.content}>

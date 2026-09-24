@@ -8,6 +8,7 @@ import SignUpScreen from './src/screens/SignUpScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import DetailScreen from './src/screens/DetailScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,11 +23,12 @@ export default function App() {
       >
         {/* Sign Up Screen Route */}
         <Stack.Screen name="SignUp" component={SignUpScreen} />
-
         {/* Register LoginScreen here once created */}
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Detail" component={DetailScreen} />
+        {/* Inside Stack.Navigator in App.js: */}
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
