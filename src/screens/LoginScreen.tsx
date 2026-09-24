@@ -10,7 +10,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LoginScreen = ({ navigation }) => {
@@ -18,7 +18,6 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Form Validation Logic
   const validateForm = () => {
     if (!email.trim() || !password.trim()) {
       setErrorMessage('All fields are required. Please enter details.');
@@ -35,56 +34,44 @@ const LoginScreen = ({ navigation }) => {
     return true;
   };
 
-  // Login Handler & Credential Verification via AsyncStorage
   const handleLoginPress = async () => {
     if (!validateForm()) {
       return;
     }
 
-    try {
-      // Fetch saved user data from local storage
-      const storedDataRaw = await AsyncStorage.getItem('@user_credentials');
+    const storedUser = await StorageService.getUserCredentials();
 
-      if (!storedDataRaw) {
-        setErrorMessage('No user found. Please sign up first.');
-        return;
-      }
+    if (!storedUser) {
+      setErrorMessage('No account found. Please sign up first.');
+      return;
+    }
 
-      const storedUser = JSON.parse(storedDataRaw);
+    const isEmailMatch =
+      storedUser.email.toLowerCase() === email.trim().toLowerCase();
+    const isPasswordMatch = storedUser.password === password;
 
-      // Verify email and password against stored data
-      const isEmailMatch =
-        storedUser.email.toLowerCase() === email.trim().toLowerCase();
-      const isPasswordMatch = storedUser.password === password;
+    if (isEmailMatch && isPasswordMatch) {
+      setErrorMessage('');
 
-      if (isEmailMatch && isPasswordMatch) {
-        setErrorMessage('');
+      await StorageService.saveUserSession({
+        isLoggedIn: true,
+        user: storedUser.userName,
+      });
 
-        // Save active session token/flag
-        await AsyncStorage.setItem(
-          '@user_session',
-          JSON.stringify({ isLoggedIn: true, user: storedUser.userName }),
-        );
-
-        Alert.alert('Success', `Welcome back, ${storedUser.userName}!`, [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to Home screen if available, or reset fields
-              if (navigation) {
-                navigation.navigate('Home');
-              }
-            },
+      Alert.alert('Success', `Welcome back, ${storedUser.userName}!`, [
+        {
+          text: 'OK',
+          onPress: () => {
+            setEmail('');
+            setPassword('');
+            if (navigation) {
+              navigation.navigate('Home');
+            }
           },
-        ]);
-      } else {
-        setErrorMessage('Login unsuccessful. Invalid email or password.');
-      }
-    } catch (error) {
-      console.error('Failed to verify credentials:', error);
-      setErrorMessage(
-        'An error occurred during authentication. Please try again.',
-      );
+        },
+      ]);
+    } else {
+      setErrorMessage('Login unsuccessful. Invalid email or password.');
     }
   };
 
@@ -98,14 +85,12 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
 
-          {/* Validation / Authentication Error Banner */}
           {errorMessage ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
             </View>
           ) : null}
 
-          {/* Input Form */}
           <View style={styles.form}>
             <Text style={styles.label}>Email Address</Text>
             <TextInput
@@ -132,12 +117,10 @@ const LoginScreen = ({ navigation }) => {
               secureTextEntry
             />
 
-            {/* Login Button */}
             <TouchableOpacity style={styles.button} onPress={handleLoginPress}>
               <Text style={styles.buttonText}>Log In</Text>
             </TouchableOpacity>
 
-            {/* Link to Sign Up */}
             <View style={styles.signupPrompt}>
               <Text style={styles.promptText}>Don't have an account?</Text>
               <TouchableOpacity

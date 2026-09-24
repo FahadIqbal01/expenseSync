@@ -10,7 +10,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService } from '../utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SignUpScreen = ({ navigation }) => {
@@ -19,7 +19,6 @@ const SignUpScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Form Validation Logic
   const validateForm = () => {
     if (!userName.trim() || !email.trim() || !password.trim()) {
       setErrorMessage('All fields are required. Please enter details.');
@@ -41,41 +40,35 @@ const SignUpScreen = ({ navigation }) => {
     return true;
   };
 
-  // Sign-Up Handler & AsyncStorage Logic
   const handleRegister = async () => {
     if (!validateForm()) {
       return;
     }
 
-    try {
-      const userData = {
-        userName: userName.trim(),
-        email: email.trim().toLowerCase(),
-        password: password,
-      };
+    const userData = {
+      userName: userName.trim(),
+      email: email.trim().toLowerCase(),
+      password: password,
+    };
 
-      // Save user details locally in AsyncStorage
-      await AsyncStorage.setItem('@user_credentials', JSON.stringify(userData));
+    const savedSuccess = await StorageService.saveUserCredentials(userData);
 
+    if (savedSuccess) {
       Alert.alert('Success', 'Account created successfully!', [
         {
           text: 'OK',
           onPress: () => {
-            // Reset input fields
             setUserName('');
             setEmail('');
             setPassword('');
             setErrorMessage('');
-
-            // Navigate to Login screen
             if (navigation) {
               navigation.navigate('Login');
             }
           },
         },
       ]);
-    } catch (error) {
-      console.error('Failed to save user data:', error);
+    } else {
       setErrorMessage(
         'An error occurred while saving your data. Please try again.',
       );
@@ -92,14 +85,12 @@ const SignUpScreen = ({ navigation }) => {
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Sign up to get started</Text>
 
-          {/* Validation Error Banner */}
           {errorMessage ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
             </View>
           ) : null}
 
-          {/* Form Fields */}
           <View style={styles.form}>
             <Text style={styles.label}>Username</Text>
             <TextInput
@@ -138,12 +129,10 @@ const SignUpScreen = ({ navigation }) => {
               secureTextEntry
             />
 
-            {/* Submit Button */}
             <TouchableOpacity style={styles.button} onPress={handleRegister}>
               <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
 
-            {/* Toggle Navigation to Login */}
             <View style={styles.loginPrompt}>
               <Text style={styles.promptText}>Already have an account?</Text>
               <TouchableOpacity
