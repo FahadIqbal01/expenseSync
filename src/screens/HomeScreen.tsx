@@ -8,85 +8,50 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService, debugDumpStorage } from '../utils/storage'; // Custom storage service import
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Dummy recent transactions data matching the Figma wireframe
-const RECENT_TRANSACTIONS = [
-  {
-    id: '1',
-    title: 'Grocery Store',
-    category: 'Food & Dining',
-    amount: '-$45.00',
-    date: 'Sep 24',
-  },
-  {
-    id: '2',
-    title: 'Fuel / Gas',
-    category: 'Transportation',
-    amount: '-$30.00',
-    date: 'Sep 23',
-  },
-  {
-    id: '3',
-    title: 'Salary Deposit',
-    category: 'Income',
-    amount: '+$2,500.00',
-    date: 'Sep 20',
-    isIncome: true,
-  },
-  {
-    id: '4',
-    title: 'Coffee Shop',
-    category: 'Food & Dining',
-    amount: '-$4.50',
-    date: 'Sep 19',
-  },
-];
+import CurrencyConverter from '../components/CurrencyConverter';
 
 const HomeScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('User');
+  const [transactions, setTransactions] = useState([]); // <--- New state for storage transactions
 
   useEffect(() => {
-    // Fetch logged-in user name from local session or user credentials
-    const loadUserData = async () => {
+    // 1. Storage ka current state logcat/terminal par print karne ke liye
+    debugDumpStorage();
+
+    // 2. Screen load hote hi session + transactions fetch karein
+    const loadHomeScreenData = async () => {
       try {
-        const sessionData = await AsyncStorage.getItem('@user_session');
-        if (sessionData) {
-          const parsedSession = JSON.parse(sessionData);
-          if (parsedSession.user) {
-            setUserName(parsedSession.user);
-            return;
+        // --- User Name Fetching ---
+        const session = await StorageService.getUserSession();
+        if (session && session.user) {
+          setUserName(session.user);
+        } else {
+          const creds = await StorageService.getUserCredentials();
+          if (creds && creds.userName) {
+            setUserName(creds.userName);
           }
         }
 
-        // Fallback to credentials if session username isn't set directly
-        const credsData = await AsyncStorage.getItem('@user_credentials');
-        if (credsData) {
-          const parsedCreds = JSON.parse(credsData);
-          if (parsedCreds.userName) {
-            setUserName(parsedCreds.userName);
-          }
-        }
+        // --- Transactions Fetching from Local Storage ---
+        const storedTransactions = await StorageService.getTransactions();
+        setTransactions(storedTransactions);
       } catch (error) {
-        console.error('Error reading user data from AsyncStorage:', error);
+        console.error('Error loading HomeScreen data:', error);
       }
     };
 
-    loadUserData();
+    loadHomeScreenData();
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('@user_session');
-      if (navigation) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
+    await StorageService.clearUserSession();
+    if (navigation) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     }
   };
 
@@ -119,7 +84,7 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header Bar */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Welcome back,</Text>
@@ -133,7 +98,7 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.content}>
-        {/* Dashboard Summary Card */}
+        {/* Summary Card */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>TOTAL SPENT THIS MONTH</Text>
           <Text style={styles.summaryAmount}>$120.00</Text>
@@ -142,45 +107,27 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Primary CTA Button */}
+        {/* API Integration Component Placement */}
+        <CurrencyConverter />
+
+        {/* Add Expense Button */}
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() =>
-            Alert.alert('Add Expense', 'Add new expense modal / screen action.')
-          }
+          onPress={() => Alert.alert('Add Expense', 'New expense screen link')}
         >
           <Text style={styles.addButtonText}>+ Add New Expense</Text>
         </TouchableOpacity>
 
-        {/* Transactions Section */}
         <Text style={styles.sectionHeader}>Recent Transactions</Text>
 
+        {/* Local Storage se loaded State Data Render ho raha hai */}
         <FlatList
-          data={RECENT_TRANSACTIONS}
+          data={transactions}
           keyExtractor={item => item.id}
           renderItem={renderTransactionItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
         />
-      </View>
-
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigation && navigation.navigate('Analytics')}
-        >
-          <Text style={styles.navText}>Analytics</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigation && navigation.navigate('Settings')}
-        >
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
