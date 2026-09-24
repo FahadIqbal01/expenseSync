@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { StorageService } from '../utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import '@notifee/react-native';
 
 const SettingsScreen = ({ navigation }) => {
   const [userProfile, setUserProfile] = useState({
@@ -139,14 +140,15 @@ const SettingsScreen = ({ navigation }) => {
 
           <View style={styles.divider} />
 
-          <View style={styles.settingRow}>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() =>
+              navigation && navigation.navigate('NotificationSettings')
+            }
+          >
             <Text style={styles.settingLabel}>Push Notifications</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#CBD5E1', true: '#0066CC' }}
-            />
-          </View>
+            <Text style={styles.settingValueText}>Configure ›</Text>
+          </TouchableOpacity>
 
           <View style={styles.divider} />
 

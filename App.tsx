@@ -9,6 +9,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,12 @@ export default function App() {
         <Stack.Screen name="Detail" component={DetailScreen} />
         {/* Inside Stack.Navigator in App.js: */}
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        {/* Stack.Navigator ke andar check karein: */}
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettingsScreen}
+          options={{ title: 'Notification Settings' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
